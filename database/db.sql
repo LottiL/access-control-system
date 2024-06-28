@@ -2,29 +2,46 @@
 
 USE gym_ACS
 
-CREATE TABLE passes (
+CREATE TABLE passType (
     id INT AUTO_INCREMENT,
-    pass_type SMALLINT NOT NULL,
+    pass_type TINYTEXT NOT NULL,
     validity SMALLINT NOT NULL,
+    PRIMARY KEY (id),
+);
+
+CREATE TABLE gymName (
+    id INT AUTO_INCREMENT,
+    gymName TINYTEXT NOT NULL,
     PRIMARY KEY (id),
 );
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT,
-    user TINYTEXT NOT NULL,
-    cardNumber INT NOT NULL,
-    gymName TINYTEXT NOT NULL,
-    passTypeID TINYTEXT NOT NULL,
-    dateOfBuying DATE,
+    firstName TINYTEXT NOT NULL,
+    lastName TINYTEXT NOT NULL,
+    email TINYTEXT,
+    phoneNumber TINYTEXT,
     PRIMARY KEY (id),
-    FOREIGN KEY (passTypeID) REFERENCES passes(id)
 );
 
---gym namere is lehetne külön tábla esetleg?
+CREATE TABLE passes (
+    id INT AUTO_INCREMENT,
+    userID INT NOT NULL,
+    passID INT NOT NULL,
+    gymID INT NOT NULL,
+    passNumber int NOT NULL,
+    dateOfBuying DATE,
+    PRIMARY KEY (id),
+    FOREIGN KEY (userID) REFERENCES users(id),
+    FOREIGN KEY (passID) REFERENCES passType(id),
+    FOREIGN KEY (gymID) REFERENCES gymName(id)
+);
+
+--https://www.airops.com/sql-guide/how-to-add-days-to-date-in-sql  (szám hozzáadása dátomhoz)
 
 CREATE TABLE staff (
     id INT AUTO_INCREMENT,
-    staff TINYTEXT NOT NULL,
+    staffName TINYTEXT NOT NULL,
     email TINYTEXT NOT NULL,
     passwordSalt varchar(255), 
     passwordHash varchar(511),
