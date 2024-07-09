@@ -3,28 +3,14 @@ const mysql = require("mysql2");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const conn = require("./db");
 
 const app = express();
 const port = 5500;
 
 dotenv.config();
 
-const conn = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-
 const key = process.env.JWT_SECRET || "secret";
-
-conn.connect((err) => {
-  if (err) {
-    console.error("Cannot connect to the database", err);
-    return;
-  }
-  console.log("Connection established");
-});
 
 function generateHash(salt, password) {
   const passwordAndSalt = password + salt;
@@ -35,13 +21,13 @@ function generateHash(salt, password) {
   return hash;
 }
 
-function generateToken(ID, isAdmin) {
+function generateToken(ID, isStaff) {
   const twoWeeksFromNow = 2 * 7 * 24 * 60 * 60;
   const token = jwt.sign(
     {
       exp: Math.floor(Date.now() / 1000) + twoWeeksFromNow,
       ID,
-      isAdmin,
+      isStaff,
     },
     key
   );
@@ -54,36 +40,46 @@ app.get("/status", (req, res) => {
   res.send();
 });
 
-app.post("/login", (req, res) => {
+async function getUser(email) {
+  const [users] = await conn.query(
+    "SELECT userID, passwordSalt, passwordHash FROM password JOIN  user ON password.userID = user.id WHERE email = ?",
+    [email]
+  );
+  return users[0];
+}
+
+app.post("/login", async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  if (!email | !password) {
+  if (!email || !password) {
     res.status(400).send({ message: "Bad Request" });
     return;
   }
 
-  const query = `SELECT userID, passwordSalt, passwordHash FROM password
-    JOIN  user ON password.userID = user.id
-    WHERE email = ?`;
-  const params = email;
-  conn.query(query, params, (err, rows) => {
-    if (rows.length === 0) {
-      res.status(401).send("Unauthorized");
-      return;
-    }
+  let user;
 
-    let passwordSalt = rows[0].passwordSalt;
-    let passwordHash = rows[0].passwordHash;
-    let generatedHash = generateHash(passwordSalt, password);
-    if (generatedHash != passwordHash) {
-      res.status(401).send("Unauthorized");
-      return;
-    }
-    let token = generateToken(rows[0].userID, 0);
+  try {
+    user = await getUser(email);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ message: "Internal server error" });
+  }
 
-    res.status(200).send(token);
-  });
+  if (!user) {
+    return res.status(401).send({ message: "Unauthorized" });
+  }
+
+  let passwordSalt = user.passwordSalt;
+  let passwordHash = user.passwordHash;
+  let generatedHash = generateHash(passwordSalt, password);
+  if (generatedHash != passwordHash) {
+    res.status(401).send("Unauthorized");
+    return;
+  }
+  let token = generateToken(user.userID, 0);
+
+  res.status(200).send(token);
 });
 
 app.listen(port, () => {
