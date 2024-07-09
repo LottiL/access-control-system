@@ -74,7 +74,7 @@ app.post("/login", async (req, res) => {
   let passwordHash = user.passwordHash;
   let generatedHash = generateHash(passwordSalt, password);
   if (generatedHash != passwordHash) {
-    res.status(401).send("Unauthorized");
+    res.status(401).send({ message: "Unauthorized" });
     return;
   }
   let token = generateToken(user.userID, 0);
