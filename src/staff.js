@@ -6,7 +6,6 @@ const {
 
 const router = express.Router();
 
-router.use(express.json());
 router.use(authenticationMiddleware);
 router.use(authorizationMiddleware);
 

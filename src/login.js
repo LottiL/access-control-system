@@ -25,48 +25,49 @@ function generateToken(ID, isStaff) {
   return token;
 }
 
-const login = {
-  async checkUser(req, res, next) {
-    const email = req.body.email;
-    const password = req.body.password;
+async function checkUser(req, res, next) {
+  const email = req.body.email;
+  const password = req.body.password;
 
-    if (!email || !password) {
-      res.status(400).send({ message: "Bad Request" });
-      return;
-    }
+  if (!email || !password) {
+    res.status(400).send({ message: "Bad Request" });
+    return;
+  }
 
-    let user;
+  let user;
 
-    try {
-      user = await getUser(email);
-    } catch (err) {
-      console.log(err);
-      return res.status(500).send({ message: "Internal server error" });
-    }
+  try {
+    user = await getUser(email);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ message: "Internal server error" });
+  }
 
-    if (!user) {
-      return res.status(401).send({ message: "Unauthorized" });
-    }
+  if (!user) {
+    return res.status(401).send({ message: "Unauthorized" });
+  }
 
-    let passwordSalt = user.passwordSalt;
-    let passwordHash = user.passwordHash;
-    let generatedHash = generateHash(passwordSalt, password);
-    if (generatedHash != passwordHash) {
-      res.status(401).send({ message: "Unauthorized" });
-      return;
-    }
-    let token = generateToken(user.userID, true);
+  let passwordSalt = user.passwordSalt;
+  let passwordHash = user.passwordHash;
+  let generatedHash = generateHash(passwordSalt, password);
+  if (generatedHash != passwordHash) {
+    res.status(401).send({ message: "Unauthorized" });
+    return;
+  }
+  let token = generateToken(user.userID, true);
 
-    res.status(200).send(token);
-  },
-};
+  res.status(200).send(token);
+}
 
 async function getUser(email) {
   const [users] = await conn.query(
-    "SELECT userID, passwordSalt, passwordHash FROM password JOIN  user ON password.userID = user.id WHERE email = ?",
+    `SELECT userID, passwordSalt, passwordHash FROM password 
+    JOIN user ON password.userID = user.id 
+    WHERE email = ?`,
+
     [email]
   );
   return users[0];
 }
 
-module.exports = login;
+module.exports = { checkUser };

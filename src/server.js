@@ -16,7 +16,7 @@ app.get("/status", (req, res) => {
   res.send();
 });
 
-app.post("/login/", login.checkUser);
+app.post("/login", login.checkUser);
 
 app.use("*", (req, res) => {
   res.status(404).send({ message: "Not found" });

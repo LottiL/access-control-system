@@ -22,7 +22,7 @@ function authenticationMiddleware(req, res, next) {
 function authorizationMiddleware(req, res, next) {
     if (req.auth.isStaff) {
         next();
-    } else{
+    } else {
         return res.status(403).send({ message: "Forbidden" });
     }
   };
