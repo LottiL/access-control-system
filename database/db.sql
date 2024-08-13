@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS passType;
 CREATE TABLE passType (
     id INT AUTO_INCREMENT,
     name TINYTEXT NOT NULL,
+    isMulti BOOLEAN,
+    isAnytime BOOLEAN,
     validity SMALLINT NOT NULL,
     PRIMARY KEY (id)
 );
@@ -23,7 +25,7 @@ CREATE TABLE user (
     id INT AUTO_INCREMENT,
     firstName TINYTEXT NOT NULL,
     lastName TINYTEXT NOT NULL,
-    email TINYTEXT,
+    email TINYTEXT NOT NULL,
     phoneNumber TINYTEXT,
     PRIMARY KEY (id)
 );
